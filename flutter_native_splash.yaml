@@ -1,0 +1,12 @@
+flutter_native_splash:
+  color: "#121212"
+  image: 'assets/images/Expentrix-Splash.png'
+
+  android: true
+  ios: true
+
+  android_12:
+    image: 'assets/images/Expentrix-Splash.png'
+    icon_background_color: "#121212"
+
+
