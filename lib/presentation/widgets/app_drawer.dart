@@ -1,6 +1,5 @@
 import 'package:expentro_expense_tracker/core/constants/sizes.dart';
 import 'package:expentro_expense_tracker/presentation/dashboard_page.dart';
-import 'package:expentro_expense_tracker/presentation/home_page.dart';
 import 'package:flutter/material.dart';
 
 class AppDrawer extends StatelessWidget {

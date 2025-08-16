@@ -1,10 +1,14 @@
 import 'package:expentro_expense_tracker/domain/entity/expense.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:media_scanner/media_scanner.dart';
 import 'package:pdf/pdf.dart';
 import 'dart:io';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ExportService {
   ExportService._();
@@ -14,7 +18,6 @@ class ExportService {
   }) async {
     final pdf = pw.Document();
     final poppinsFont = await loadPoppinsFont();
-
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
@@ -104,24 +107,35 @@ class ExportService {
         ],
       ),
     );
-    await _savePdfToDownloads(pdf);
     return pdf;
   }
 
-  static Future<void> _savePdfToDownloads(pw.Document pdf) async {
-    Directory? downloadsDir;
-    // final fileName = DateTime.now().toString();
-    if (Platform.isAndroid) {
-      downloadsDir = Directory('/storage/emulated/0/Download');
-    } else if (Platform.isIOS) {
-      // iOS does not have a traditional "Downloads" folder — you'll usually need to share it instead
-      downloadsDir = await getApplicationDocumentsDirectory();
-    }
+  static Future<bool> savePdfToDownloads(pw.Document pdf) async {
+    try {
+      Directory? downloadsDir;
 
-    final filePath = '${downloadsDir!.path}/expenses.pdf';
-    final file = File(filePath);
-    await file.writeAsBytes(await pdf.save());
-    print('Saved to: $filePath');
+      if (Platform.isAndroid) {
+        if (await Permission.storage.request().isDenied) {
+          debugPrint("Storage permission denied");
+          return false;
+        }
+        downloadsDir = Directory('/storage/emulated/0/Download');
+      } else if (Platform.isIOS) {
+        downloadsDir = await getApplicationDocumentsDirectory();
+      }
+
+      String timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final filePath = '${downloadsDir!.path}/expenses_$timestamp.pdf';
+
+      final file = File(filePath);
+      await file.writeAsBytes(await pdf.save());
+      await MediaScanner.loadMedia(path: filePath);
+      debugPrint('Saved to: $filePath');
+      return true;
+    } catch (e) {
+      debugPrint('Failed at savePdfToDownload $e');
+      throw Exception('Failed to export PDF. $e');
+    }
   }
 
   static Future<pw.Font> loadPoppinsFont() async {

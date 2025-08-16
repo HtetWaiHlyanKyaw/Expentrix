@@ -21,6 +21,7 @@ abstract class ExpenseRepo {
   });
   Future<DateTime?> getStartDate();
   Future<List<List<double>>> getMonthlyTotalExpense();
+  Future<List<List<double>>> getDailyTotalExpense();
 
   //POST
   Future<void> addExpense(Expense expense);

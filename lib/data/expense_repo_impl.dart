@@ -7,7 +7,7 @@ import 'package:expentro_expense_tracker/service_locator.dart';
 import 'package:flutter/cupertino.dart';
 
 class ExpenseRepoImpl extends ExpenseRepo {
-  List<Expense> expenses = [];
+  // List<Expense> expenses = [];
   final DatabaseHelper _dbHelper = getIt<DatabaseHelper>();
 
   @override
@@ -21,56 +21,143 @@ class ExpenseRepoImpl extends ExpenseRepo {
     }
   }
 
+  //SLOW
+  // @override
+  // Future<List<List<double>>> getMonthlyTotalExpense() async {
+  //   final now = DateTime.now();
+  //   final year = now.year;
+  //
+  //   List<double> totals = [];
+  //
+  //   try {
+  //     for (var month = 1; month <= 12; month++) {
+  //       final totalDays = daysInMonth(year, month);
+  //
+  //       double monthlyTotal = 0.0;
+  //
+  //       for (var day = 1; day <= totalDays; day++) {
+  //         monthlyTotal += await getTotalExpenseByDate(
+  //           DateTime(year, month, day),
+  //         );
+  //       }
+  //
+  //       totals.add(monthlyTotal);
+  //     }
+  //
+  //     final max = totals.reduce((a, b) => a > b ? a : b);
+  //     return [
+  //       totals,
+  //       [max],
+  //     ];
+  //   } catch (e) {
+  //     debugPrint('Failed to get monthly totals: ${e.toString()}');
+  //     throw Exception(e);
+  //   }
+  // }
+
   @override
   Future<List<List<double>>> getMonthlyTotalExpense() async {
-    final now = DateTime.now();
-    final year = now.year;
-
-    List<double> totals = [];
-
     try {
-      for (var month = 1; month <= 12; month++) {
-        final totalDays = daysInMonth(year, month);
+      final db = await _dbHelper.database;
 
-        double monthlyTotal = 0.0;
+      final now = DateTime.now();
+      final startDate = DateTime(now.year, 1, 1);
+      final endDate = DateTime(now.year + 1, 1, 1);
 
-        for (var day = 1; day <= totalDays; day++) {
-          monthlyTotal += await getTotalExpenseByDate(
-            DateTime(year, month, day),
-          );
-        }
+      final result = await db.rawQuery(
+        '''
+      SELECT strftime('%m', date) as month,
+             SUM(price) as total
+      FROM expenses
+      WHERE date >= ? AND date < ?
+      GROUP BY month
+      ORDER BY month
+      ''',
+        [startDate.toIso8601String(), endDate.toIso8601String()],
+      );
 
-        totals.add(monthlyTotal);
+      List<double> totals = List.filled(12, 0.0);
+
+      for (var row in result) {
+        int month = int.parse(row['month'] as String);
+        double total = (row['total'] as num).toDouble();
+        totals[month - 1] = total;
       }
 
       final max = totals.reduce((a, b) => a > b ? a : b);
+
       return [
         totals,
         [max],
       ];
     } catch (e) {
-      debugPrint('Failed to get monthly totals: ${e.toString()}');
+      debugPrint('Failed to fetch monthly total expenses $e');
       throw Exception(e);
     }
   }
 
+  //SLOW
+  // @override
+  // Future<List<List<double>>> getDailyTotalExpense() async {
+  //   final now = DateTime.now();
+  //   final year = now.year;
+  //   final month = now.month;
+  //   final totalDays = daysInMonth(year, month);
+  //   List<double> totals = [];
+  //   try {
+  //     for (var day = 1; day <= totalDays; day++) {
+  //       totals.add(await getTotalExpenseByDate(DateTime(year, month, day)));
+  //     }
+  //     final max = totals.reduce((a, b) => a > b ? a : b);
+  //     return [
+  //       totals,
+  //       [max],
+  //     ];
+  //   } catch (e) {
+  //     debugPrint('Failed to get daily totals: ${e.toString}');
+  //     throw Exception(e);
+  //   }
+  // }
+
+  @override
   Future<List<List<double>>> getDailyTotalExpense() async {
-    final now = DateTime.now();
-    final year = now.year;
-    final month = now.month;
-    final totalDays = daysInMonth(year, month);
-    List<double> totals = [];
     try {
-      for (var day = 1; day <= totalDays; day++) {
-        totals.add(await getTotalExpenseByDate(DateTime(year, month, day)));
+      final db = await _dbHelper.database;
+
+      final now = DateTime.now();
+      final startDate = DateTime(now.year, now.month, 1);
+      final endDate = DateTime(now.year, now.month + 1, 1);
+
+      final totalDays = daysInMonth(now.year, now.month);
+
+      final result = await db.rawQuery(
+        '''
+      SELECT strftime('%d', date) as day,
+             SUM(price) as total
+      FROM expenses
+      WHERE date >= ? AND date < ?
+      GROUP BY day
+      ORDER BY day
+      ''',
+        [startDate.toIso8601String(), endDate.toIso8601String()],
+      );
+
+      List<double> totals = List.filled(totalDays, 0.0);
+
+      for (var row in result) {
+        int day = int.parse(row['day'] as String);
+        double total = (row['total'] as num).toDouble();
+        totals[day - 1] = total;
       }
+
       final max = totals.reduce((a, b) => a > b ? a : b);
+
       return [
         totals,
         [max],
       ];
     } catch (e) {
-      debugPrint('Failed to get daily totals: ${e.toString}');
+      debugPrint('Failed to fetch daily total expenses $e');
       throw Exception(e);
     }
   }

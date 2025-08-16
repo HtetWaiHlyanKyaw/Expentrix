@@ -2,12 +2,13 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:expentro_expense_tracker/data/expense_repo_impl.dart';
 import 'package:expentro_expense_tracker/domain/entity/expense.dart';
+import 'package:expentro_expense_tracker/domain/expense_repo.dart';
 
 import '../../../../service_locator.dart';
 part 'dashboard_overview_state.dart';
 
 class DashboardOverviewCubit extends Cubit<DashboardOverviewState> {
-  final ExpenseRepoImpl _repo = getIt<ExpenseRepoImpl>();
+  final ExpenseRepo _repo = getIt<ExpenseRepo>();
   DashboardOverviewCubit() : super(DashboardOverviewInitial());
 
   Future<void> loadTotalExpenses() async {

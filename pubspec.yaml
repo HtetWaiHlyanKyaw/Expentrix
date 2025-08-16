@@ -48,6 +48,7 @@ dependencies:
   path_provider: ^2.1.5
   media_scanner: ^2.2.0
   printing: ^5.14.2
+  permission_handler: ^12.0.1
 
 dev_dependencies:
   flutter_test:

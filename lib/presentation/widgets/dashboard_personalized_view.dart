@@ -117,11 +117,11 @@ class _DashboardPersonalizedViewState extends State<DashboardPersonalizedView> {
                                         expenses: expenses,
                                         total: prices,
                                       );
-                                      // showPdfPreview(pdf);
+                                      showPdfPreview(pdf);
                                     }
                                   : null,
                               child: Text(
-                                'Download as PDF',
+                                'Export',
                                 style: TextStyle(
                                   color: expenses.isNotEmpty
                                       ? Colors.green
@@ -211,132 +211,21 @@ class _DashboardPersonalizedViewState extends State<DashboardPersonalizedView> {
     }).toList();
   }
 
-  Widget buildGraphView(BuildContext context) {
-    final List<FlSpot> yearlySpots = [
-      FlSpot(1, 39000000),
-      FlSpot(2, 12000000),
-      FlSpot(3, 45000000),
-      FlSpot(4, 15000000),
-      FlSpot(5, 38000000),
-      FlSpot(6, 25000000),
-      FlSpot(7, 23000000),
-      FlSpot(8, 32000000),
-      FlSpot(9, 30000000),
-      FlSpot(10, 18000000),
-      FlSpot(11, 27000000),
-      FlSpot(12, 28000000),
-    ];
-    final List<BarChartGroupData> yearlyBarGroups = yearlySpots.map((spot) {
-      return BarChartGroupData(
-        x: spot.x.toInt(),
-        barRods: [
-          BarChartRodData(
-            toY: spot.y,
-            color: Colors.indigoAccent,
-            width: 8,
-            borderRadius: BorderRadius.circular(0),
-          ),
-        ],
-      );
-    }).toList();
-
-    return SingleChildScrollView(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Graph View',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
-            Text(
-              'January 1, 2025 - Today (August 8, 2025)',
-              style: TextStyle(color: context.colors.secondary),
-            ),
-            SizedBox(height: 20),
-            SizedBox(
-              height: 200,
-              child: BarChart(
-                BarChartData(
-                  barTouchData: BarTouchData(
-                    enabled: true,
-                    touchTooltipData: BarTouchTooltipData(
-                      getTooltipColor: (groupData) {
-                        return context.colors.inverseSurface;
-                      },
-                      tooltipPadding: const EdgeInsets.all(8),
-                      tooltipMargin: 16,
-                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                        return BarTooltipItem(
-                          '${rod.toY.toInt()} MMK',
-                          TextStyle(
-                            color: context.colors.onInverseSurface,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-
-                  maxY: 50000000,
-                  minY: 0,
-                  barGroups: yearlyBarGroups,
-                  gridData: FlGridData(
-                    drawHorizontalLine: true,
-                    drawVerticalLine: false,
-                  ),
-                  borderData: FlBorderData(show: false),
-                  titlesData: FlTitlesData(
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 32,
-                        interval: 1,
-                        getTitlesWidget: (value, meta) {
-                          return Text('${value.toInt()}');
-                        },
-                      ),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 50,
-                        interval: 10000000,
-                        getTitlesWidget: (value, meta) {
-                          return Text('${value ~/ 100000}k');
-                        },
-                      ),
-                    ),
-                    topTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    rightTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void showPdfPreview(pw.Document pdf) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('PDF Preview'),
-        content: Container(
+        content: SizedBox(
           width: double.maxFinite,
           height: 400,
           child: PdfPreview(
             build: (format) => pdf.save(),
+            canDebug: false,
             allowPrinting: false,
             allowSharing: true,
+            canChangeOrientation: false,
+            canChangePageFormat: false,
 
             // Enable sharing
           ),
@@ -346,7 +235,26 @@ class _DashboardPersonalizedViewState extends State<DashboardPersonalizedView> {
             onPressed: () => Navigator.pop(context),
             child: Text('Close'),
           ),
+          FilledButton(
+            onPressed: () async {
+              final success = await ExportService.savePdfToDownloads(pdf);
+              _onDownloadPressed(pdf, success);
+              Navigator.pop(context);
+            },
+            style: FilledButton.styleFrom(backgroundColor: Colors.green),
+            child: Text('Save PDF', style: TextStyle(color: Colors.white)),
+          ),
         ],
+      ),
+    );
+  }
+
+  void _onDownloadPressed(pw.Document pdf, bool success) async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success ? 'PDF saved successfully!' : 'Failed to save PDF',
+        ),
       ),
     );
   }

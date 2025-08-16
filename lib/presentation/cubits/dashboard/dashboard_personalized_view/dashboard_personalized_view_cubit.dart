@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:expentro_expense_tracker/domain/expense_repo.dart';
 
 import '../../../../data/expense_repo_impl.dart';
 import '../../../../domain/entity/expense.dart';
@@ -9,7 +10,7 @@ part 'dashboard_personalized_view_state.dart';
 
 class DashboardPersonalizedViewCubit
     extends Cubit<DashboardPersonalizedViewState> {
-  final ExpenseRepoImpl _repo = getIt<ExpenseRepoImpl>();
+  final ExpenseRepo _repo = getIt<ExpenseRepo>();
   DashboardPersonalizedViewCubit() : super(DashboardPersonalizedViewInitial());
 
   Future<void> loadExpenseByDate(DateTime date) async {

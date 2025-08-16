@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:expentro_expense_tracker/domain/expense_repo.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expentro_expense_tracker/data/expense_repo_impl.dart';
 import 'package:expentro_expense_tracker/domain/entity/expense.dart';
@@ -6,7 +7,7 @@ import '../../../service_locator.dart';
 part 'home_state.dart';
 
 class HomeCubit extends Cubit<HomeState> {
-  final ExpenseRepoImpl _repo = getIt<ExpenseRepoImpl>();
+  final ExpenseRepo _repo = getIt<ExpenseRepo>();
   HomeCubit() : super(HomeInitial());
 
   Future<void> loadExpenses() async {
